@@ -87,12 +87,12 @@ public class BollingerStrategy extends AbstractStrategy implements Strategy {
                 break;
         }
         if (side != null) {
-            logger.info("Strategy cash balance: " + simulator.getCashBalance());
             if (position.getQuantity() > 0) {
                 placeOrder(side, position.getQuantity());
             } else if (position.getQuantity() < 0) {
                 placeOrder(side, -position.getQuantity());
             }
+            logger.info("Strategy cash balance: " + simulator.getCashBalance());
 
         }
 
@@ -125,6 +125,8 @@ public class BollingerStrategy extends AbstractStrategy implements Strategy {
         PricePublisher pricePublisher = new BacktestPricePublisher(testFilePath, security);
         pricePublisher.addPriceSubscriber(security.getKey(), this);
         ((BacktestPricePublisher) pricePublisher).startPublishing();
+        // finally close position
+        closePosition(simulator.getPosition());
     }
 
 }
