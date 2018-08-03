@@ -112,9 +112,7 @@ public class BollingerStrategy extends AbstractStrategy implements Strategy {
 
         bollingerBands = new BollingerBands(30, 2.5);
 
-        String userHome = System.getProperty("user.home");
-
-        String testFilePath = userHome + "/algo/resources/EUR.USD.csv";
+        String testFilePath = getClass().getClassLoader().getResource("EUR.USD.csv").getPath();
 
         Security security = new Security("EUR", "USD", SecurityType.CASH);
 
