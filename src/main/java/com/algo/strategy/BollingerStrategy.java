@@ -106,6 +106,7 @@ public class BollingerStrategy extends AbstractStrategy implements Strategy {
     public void run() {
         logger.info("Running trading strategy based on Bollinger bands");
 
+        // setup required for test
         simulator = new SimulatorImpl();
         simulator.setCashBalance(1000000.0);
 
@@ -119,14 +120,17 @@ public class BollingerStrategy extends AbstractStrategy implements Strategy {
 
         startBacktest(testFilePath, security);
 
+        // finally close position
+        Position position = simulator.getPosition();
+        if (position != null)
+            closePosition(position);
+
     }
 
     public void startBacktest(String testFilePath, Security security) {
         PricePublisher pricePublisher = new BacktestPricePublisher(testFilePath, security);
         pricePublisher.addPriceSubscriber(security.getKey(), this);
         ((BacktestPricePublisher) pricePublisher).startPublishing();
-        // finally close position
-        closePosition(simulator.getPosition());
     }
 
 }

@@ -82,6 +82,7 @@ public class BacktestPricePublisher implements PricePublisher {
                 try {
                     reader = new BufferedReader(new FileReader(filePath));
                 } catch (FileNotFoundException e) {
+                    logger.error("Unable to find file", e);
                     endOfFile = true;
                     return;
                 }
