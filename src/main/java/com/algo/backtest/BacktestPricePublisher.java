@@ -12,6 +12,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -123,7 +124,7 @@ public class BacktestPricePublisher implements PricePublisher {
             Date dateTime = null;
             try {
                 dateTime = format.parse(lineItems[0]);
-            } catch (Exception e) {
+            } catch (ParseException e) {
                 logger.error("Invalid date format: " + lineItems[0]);
                 return null;
             }
