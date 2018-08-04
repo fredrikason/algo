@@ -5,5 +5,9 @@ package com.algo.marketdata;
  */
 public interface PriceSubscriber {
 
+    /**
+     * Call back method for price updates.
+     * @param closePrice
+     */
     void onPriceUpdate(ClosePrice closePrice);
 }

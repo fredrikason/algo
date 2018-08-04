@@ -1,31 +1,39 @@
 package com.algo.strategy;
 
 import ch.algotrader.entity.Position;
-import ch.algotrader.entity.trade.MarketOrder;
 import ch.algotrader.enumeration.Side;
-import ch.algotrader.simulation.Simulator;
-import ch.algotrader.simulation.SimulatorImpl;
 import com.algo.backtest.BacktestPricePublisher;
 import com.algo.entity.Security;
 import com.algo.enumeration.SecurityType;
 import com.algo.marketdata.ClosePrice;
 import com.algo.marketdata.PricePublisher;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.algo.marketdata.PriceSubscriber;
 import ch.algotrader.enumeration.Direction;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
+
+import java.net.URL;
 
 /**
  * A simple breaking out trading strategy based on Bollinger bands.
  */
-public class BollingerStrategy extends AbstractStrategy implements Strategy {
+@Configuration
+@PropertySource("classpath:BollingerStrategy.properties")
+public class BollingerStrategy extends Strategy implements PriceSubscriber {
 
-    private static Logger logger = LogManager.getLogger(BollingerStrategy.class.getName());
+    @Value("${startingCashBalance}")
+    private double cashBalance;
 
-    //TODO @Autowired
-    private Simulator simulator;
+    @Value("${movingAverageLength}")
+    private int windowLength;
+
+    @Value("${standardDeviations}")
+    private double standardDeviations;
+
     private BollingerBands bollingerBands;
 
-    static int priceCount;
+    private int priceCount;
 
     @Override
     public void onPriceUpdate(ClosePrice closePrice) {
@@ -34,10 +42,10 @@ public class BollingerStrategy extends AbstractStrategy implements Strategy {
         }
         priceCount++;
 
-        double dailyClosingPrice = closePrice.getClose();
+        final double dailyClosingPrice = closePrice.getClose();
 
         // update the current price
-        simulator.setCurrentPrice(dailyClosingPrice);
+        setCurrentPrice(dailyClosingPrice);
 
         // update the Bollinger bands
         bollingerBands.add(dailyClosingPrice);
@@ -49,9 +57,9 @@ public class BollingerStrategy extends AbstractStrategy implements Strategy {
             double lowerBand = bollingerBands.getLowerBand();
 
             // main trading strategy logic
-            Position position = simulator.getPosition();
+            Position position = getCurrentPosition();
             if (position == null || position.getQuantity() == 0) {
-                double balance = simulator.getCashBalance();
+                double balance = getCurrentCashBalance();
                 long quantity = (long) balance;
                 if (dailyClosingPrice < lowerBand) {
                     placeOrder(Side.BUY, quantity);
@@ -68,36 +76,6 @@ public class BollingerStrategy extends AbstractStrategy implements Strategy {
         }
     }
 
-    private void placeOrder(Side side, long quantity) {
-        MarketOrder order = new MarketOrder(side, quantity);
-        logger.debug("Placing market order: " + order);
-        simulator.sendOrder(order);
-    }
-
-    private void closePosition(Position position) {
-        Side side = null;
-        switch (position.getDirection()) {
-            case LONG:
-                side = Side.SELL;
-                break;
-            case SHORT:
-                side = Side.BUY;
-                break;
-            case FLAT:
-                break;
-        }
-        if (side != null) {
-            if (position.getQuantity() > 0) {
-                placeOrder(side, position.getQuantity());
-            } else if (position.getQuantity() < 0) {
-                placeOrder(side, -position.getQuantity());
-            }
-            logger.info("Strategy cash balance: " + simulator.getCashBalance());
-
-        }
-
-    }
-
     public static void main(String[] args) {
         init(BollingerStrategy.class);
     }
@@ -107,28 +85,30 @@ public class BollingerStrategy extends AbstractStrategy implements Strategy {
         logger.info("Running trading strategy based on Bollinger bands");
 
         // setup required for test
-        simulator = new SimulatorImpl();
-        simulator.setCashBalance(1000000.0);
+        setInitialCashBalance(cashBalance);
 
-        bollingerBands = new BollingerBands(30, 2.5);
+        bollingerBands = new BollingerBands(windowLength, standardDeviations);
 
-        String testFilePath = getClass().getClassLoader().getResource("EUR.USD.csv").getPath();
+        URL testFileUrl = getClass().getClassLoader().getResource("EUR.USD.csv");
 
         Security security = new Security("EUR", "USD", SecurityType.CASH);
 
-        startBacktest(testFilePath, security);
+        startBacktest(testFileUrl, security);
 
         // finally close position
-        Position position = simulator.getPosition();
+        Position position = getCurrentPosition();
         if (position != null)
             closePosition(position);
 
     }
 
-    public void startBacktest(String testFilePath, Security security) {
-        PricePublisher pricePublisher = new BacktestPricePublisher(testFilePath, security);
+    public void startBacktest(URL testFileUrl, Security security) {
+        long startTime = System.currentTimeMillis();
+        PricePublisher pricePublisher = new BacktestPricePublisher(testFileUrl.getPath(), security);
         pricePublisher.addPriceSubscriber(security.getKey(), this);
         ((BacktestPricePublisher) pricePublisher).startPublishing();
+        long endTime = System.currentTimeMillis();
+        logger.info("Backtesting strategy took " + (endTime - startTime) + " milliseconds");
     }
 
 }

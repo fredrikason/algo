@@ -7,5 +7,10 @@ import com.algo.entity.Security.SecurityKey;
  */
 public interface PricePublisher {
 
+    /**
+     * Registers a price subscriber for a specific security.
+     * @param securityKey
+     * @param subscriber
+     */
     void addPriceSubscriber(SecurityKey securityKey, PriceSubscriber subscriber);
 }

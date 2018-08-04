@@ -41,13 +41,21 @@ public class BacktestPricePublisher implements PricePublisher {
     }
 
     public void startPublishing() {
-        testFile.readNextPrice();
-        while (true) {
-            if (testFile.isEndOfFile()) {
-                break;
-            }
-            publishPrice(testFile.getPrice());
+        try {
             testFile.readNextPrice();
+            while (true) {
+                if (testFile.isEndOfFile()) {
+                    break;
+                }
+                publishPrice(testFile.getPrice());
+                testFile.readNextPrice();
+            }
+        } catch (FileNotFoundException e) {
+            logger.error("Unable to find file", e);
+        } catch (IOException e) {
+            logger.error("Unable to read file", e);
+        } finally {
+            testFile.close();
         }
     }
 
@@ -78,25 +86,13 @@ public class BacktestPricePublisher implements PricePublisher {
             return price;
         }
 
-        public void readNextPrice() {
+        public void readNextPrice() throws IOException {
             if (null == reader) {
-                try {
-                    reader = new BufferedReader(new FileReader(filePath));
-                } catch (FileNotFoundException e) {
-                    logger.error("Unable to find file", e);
-                    endOfFile = true;
-                    return;
-                }
+                reader = new BufferedReader(new FileReader(filePath));
             }
             while (true) {
-                String line;
-                try {
-                    line = reader.readLine();
-                    lineCount++;
-                } catch (IOException e) {
-                    endOfFile = true;
-                    return;
-                }
+                String line = reader.readLine();
+                lineCount++;
                 if (1 == lineCount) {
                     // throw away header
                     continue;
@@ -105,17 +101,23 @@ public class BacktestPricePublisher implements PricePublisher {
                     endOfFile = true;
                     return;
                 }
-                try {
-                    price = createPriceFromLine(line);
-                    break;
-                } catch (Exception e) {
-                    logger.error("Unable to create price", e);
-                }
+                price = createPriceFromLine(line);
+                break;
             }
         }
 
         public boolean isEndOfFile() {
             return endOfFile;
+        }
+
+        public void close() {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                    logger.debug("Unable to close reader", e);
+                }
+            }
         }
 
         private ClosePrice createPriceFromLine(String line) {
@@ -126,6 +128,7 @@ public class BacktestPricePublisher implements PricePublisher {
                 dateTime = format.parse(lineItems[0]);
             } catch (ParseException e) {
                 logger.error("Invalid date format: " + lineItems[0]);
+                endOfFile = true;
                 return null;
             }
             double open = Double.parseDouble(lineItems[1]);

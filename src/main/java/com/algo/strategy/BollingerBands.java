@@ -7,49 +7,80 @@ import java.util.Queue;
  * An simple moving average implementation of Bollinger bands.
  */
 public class BollingerBands {
-    private Queue<Double> data = new LinkedList<>();
+
+    private Queue<Double> prices = new LinkedList<>();
     private int windowLength;
     private double deviations;
     private double sum;
+    private double sumSquared;
 
 
+    /**
+     * Constructs a new BollingerBands
+     * @param windowLength
+     * @param deviations
+     */
     public BollingerBands(int windowLength, double deviations) {
         this.windowLength = windowLength;
         this.deviations = deviations;
     }
 
-    public void add(double price)
-    {
-        sum += price;
-        data.add(price);
+    /**
+     * Returns the number of prices currently in the window
+     * @return
+     */
+    public int size() {
+        return prices.size();
+    }
 
-        if (data.size() > windowLength)
+    /**
+     * Adds a price and updates the price sums.
+     * @param price
+     */
+    public void add(double price) {
+        sum += price;
+        sumSquared += Math.pow(price, 2);
+        prices.add(price);
+
+        if (prices.size() > windowLength)
         {
-            sum -= data.remove();
+            double priceToRemove = prices.remove();
+            sum -= priceToRemove;
+            sumSquared -= Math.pow(priceToRemove, 2);
+
         }
     }
 
+    /**
+     * Returns the standard deviation.
+     * @return
+     */
+    public double getStandardDeviation() {
+        return Math.sqrt(sumSquared / windowLength - Math.pow(getAverage(), 2));
+    }
+
+    /**
+     * Returns the moving average.
+     * @return
+     */
     public double getAverage() {
         return sum / windowLength;
     }
 
-    public double getDeviation() {
-        double avg = getAverage();
-
-        double sum = 0;
-        for (double price : data) {
-            sum += Math.pow(price - avg, 2);
-        }
-
-        return Math.sqrt(sum / windowLength);
-    }
-
+    /**
+     * Returns the upper band.
+     * @return
+     */
     public double getUpperBand() {
-        return getAverage() + (deviations * getDeviation());
+        return getAverage() + (deviations * getStandardDeviation());
     }
 
+    /**
+     * Returns the lower band.
+     * @return
+     */
     public double getLowerBand() {
-        return getAverage() - (deviations * getDeviation());
+        return getAverage() - (deviations * getStandardDeviation());
     }
 
 }

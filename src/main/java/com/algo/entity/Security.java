@@ -11,7 +11,7 @@ public class Security {
 
     private SecurityKey key;
     private String symbol;
-     private String currency = "USD";
+    private String currency = "USD";
     private SecurityType securityType = SecurityType.NONE;
 
     public Security(String symbol, String currency, SecurityType securityType) {
