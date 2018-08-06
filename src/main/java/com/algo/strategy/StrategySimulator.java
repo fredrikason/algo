@@ -7,11 +7,12 @@ import ch.algotrader.simulation.Simulator;
 import ch.algotrader.simulation.SimulatorImpl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.boot.CommandLineRunner;
 
 /**
  * Base class for all strategy simulations.
  */
-public abstract class StrategySimulator {
+public abstract class StrategySimulator implements CommandLineRunner {
 
     protected static Logger logger = LogManager.getLogger(StrategySimulator.class.getName());
 

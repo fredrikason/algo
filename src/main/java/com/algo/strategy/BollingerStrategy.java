@@ -10,7 +10,6 @@ import com.algo.marketdata.PricePublisher;
 import com.algo.marketdata.PriceSubscriber;
 import ch.algotrader.enumeration.Direction;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
@@ -23,7 +22,7 @@ import java.net.URL;
 @Component
 @Configuration
 @PropertySource("classpath:BollingerStrategy.properties")
-public class BollingerStrategy extends StrategySimulator implements PriceSubscriber, CommandLineRunner {
+public class BollingerStrategy extends StrategySimulator implements PriceSubscriber {
 
     @Value("${startingCashBalance}")
     private double cashBalance;
