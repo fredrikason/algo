@@ -10,17 +10,20 @@ import com.algo.marketdata.PricePublisher;
 import com.algo.marketdata.PriceSubscriber;
 import ch.algotrader.enumeration.Direction;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.stereotype.Component;
 
 import java.net.URL;
 
 /**
  * A simple breaking out trading strategy based on Bollinger bands.
  */
+@Component
 @Configuration
 @PropertySource("classpath:BollingerStrategy.properties")
-public class BollingerStrategy extends Strategy implements PriceSubscriber {
+public class BollingerStrategy extends StrategySimulator implements PriceSubscriber, CommandLineRunner {
 
     @Value("${startingCashBalance}")
     private double cashBalance;
@@ -76,12 +79,8 @@ public class BollingerStrategy extends Strategy implements PriceSubscriber {
         }
     }
 
-    public static void main(String[] args) {
-        init(BollingerStrategy.class);
-    }
-
     @Override
-    public void run() {
+    public void run(String... args) throws Exception {
         logger.info("Running trading strategy based on Bollinger bands");
 
         // setup required for test
